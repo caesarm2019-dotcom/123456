@@ -37,24 +37,12 @@
         "photoURL": { "type": "string" },
         "email": { "type": "string" },
         "whatsappNumber": { "type": "string" },
-        "rating": { "type": "number" },
-        "totalReviews": { "type": "number" },
+        "phoneNumber": { "type": "string" },
+        "address": { "type": "string" },
+        "birthDate": { "type": "string", "format": "date" },
         "fcmToken": { "type": "string", "description": "FCM Token for push notifications" }
       },
       "required": ["displayName", "email"]
-    },
-    "Review": {
-      "title": "Review",
-      "description": "User review after a transaction",
-      "type": "object",
-      "properties": {
-        "fromUserId": { "type": "string" },
-        "toUserId": { "type": "string" },
-        "rating": { "type": "number" },
-        "text": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["fromUserId", "toUserId", "rating", "createdAt"]
     },
     "Conversation": {
       "title": "Conversation",
@@ -66,7 +54,8 @@
         "adTitle": { "type": "string" },
         "lastMessage": { "type": "string" },
         "lastMessageAt": { "type": "string", "format": "date-time" },
-        "unreadCount": { "type": "object", "description": "Map of userId to unread count" }
+        "unreadCount": { "type": "object", "description": "Map of userId to unread count" },
+        "typing": { "type": "object", "description": "Map of userId to typing status" }
       },
       "required": ["participants", "adId", "lastMessageAt"]
     },
@@ -77,6 +66,7 @@
       "properties": {
         "senderId": { "type": "string" },
         "text": { "type": "string" },
+        "read": { "type": "boolean", "description": "Whether the message has been read" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["senderId", "text", "createdAt"]
@@ -92,6 +82,40 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["userId", "text", "createdAt"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "In-app notification for user actions",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "UID of the recipient" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "type": { "type": "string", "enum": ["sale", "info"] },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "title", "message", "type", "read", "createdAt"]
+    },
+    "Block": {
+      "title": "Block",
+      "description": "Information about a blocked user",
+      "type": "object",
+      "properties": {
+        "blockedUserId": { "type": "string", "description": "UID of the user being blocked" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["blockedUserId", "createdAt"]
+    },
+    "Favorite": {
+      "title": "Favorite",
+      "description": "A saved ad for later reference",
+      "type": "object",
+      "properties": {
+        "adId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["adId", "createdAt"]
     }
   },
   "firestore": {
@@ -107,9 +131,9 @@
       "schema": "User",
       "description": "User profiles"
     },
-    "/users/{userId}/reviews": {
-      "schema": "Review",
-      "description": "Reviews received by a user"
+    "/users/{userId}/favorites": {
+      "schema": "Favorite",
+      "description": "Ads favorited by this user"
     },
     "/chats": {
       "schema": "Conversation",
@@ -118,6 +142,14 @@
     "/chats/{chatId}/messages": {
       "schema": "Message",
       "description": "Messages within a chat thread"
+    },
+    "/notifications": {
+      "schema": "Notification",
+      "description": "User specific notifications"
+    },
+    "/users/{userId}/blocks": {
+      "schema": "Block",
+      "description": "Users blocked by this user"
     }
   }
 }

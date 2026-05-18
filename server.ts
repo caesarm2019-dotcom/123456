@@ -87,8 +87,8 @@ async function startServer() {
       return res.status(400).json({ error: "Registration token is required" });
     }
 
-    if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
-      return res.status(501).json({ error: "FCM not configured on server" });
+    if (admin.apps.length === 0) {
+      return res.status(501).json({ error: "FCM not configured or initialized on server" });
     }
 
     try {
