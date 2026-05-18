@@ -1,0 +1,10 @@
+{
+  "name": "سوق العراق - Souq Iraq",
+  "description": "منصة عراقية 100% لبيع وشراء الأغراض المستعملة بسهولة وأمان. تواصل مباشر عبر واتساب، فلاتر ذكاء اصطناعي، وتحديد موقع جغرافي.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

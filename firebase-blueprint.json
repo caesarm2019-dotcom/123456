@@ -1,0 +1,123 @@
+{
+  "entities": {
+    "Ad": {
+      "title": "Ad",
+      "description": "A marketplace advertisement for a second-hand item",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "The title of the ad" },
+        "description": { "type": "string", "description": "Detailed description of the item" },
+        "price": { "type": "number", "description": "Price in Iraqi Dinar (IQD)" },
+        "category": { "type": "string", "description": "Category like Electronics, Furniture, etc." },
+        "condition": { "type": "string", "enum": ["new", "excellent", "good", "fair"], "description": "Condition of the item" },
+        "images": { "type": "array", "items": { "type": "string" }, "description": "URLs of item images" },
+        "location": {
+          "type": "object",
+          "properties": {
+            "lat": { "type": "number" },
+            "lng": { "type": "number" },
+            "city": { "type": "string" }
+          }
+        },
+        "sellerId": { "type": "string", "description": "UID of the seller" },
+        "sellerName": { "type": "string", "description": "Name of the seller" },
+        "contactMethod": { "type": "string", "enum": ["whatsapp", "chat"], "description": "Preferred contact method" },
+        "whatsappNumber": { "type": "string", "description": "WhatsApp number if chosen" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["active", "sold", "deleted"] }
+      },
+      "required": ["title", "price", "category", "sellerId", "createdAt", "status"]
+    },
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "email": { "type": "string" },
+        "whatsappNumber": { "type": "string" },
+        "rating": { "type": "number" },
+        "totalReviews": { "type": "number" },
+        "fcmToken": { "type": "string", "description": "FCM Token for push notifications" }
+      },
+      "required": ["displayName", "email"]
+    },
+    "Review": {
+      "title": "Review",
+      "description": "User review after a transaction",
+      "type": "object",
+      "properties": {
+        "fromUserId": { "type": "string" },
+        "toUserId": { "type": "string" },
+        "rating": { "type": "number" },
+        "text": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["fromUserId", "toUserId", "rating", "createdAt"]
+    },
+    "Conversation": {
+      "title": "Conversation",
+      "description": "A chat session between a buyer and seller",
+      "type": "object",
+      "properties": {
+        "participants": { "type": "array", "items": { "type": "string" }, "description": "UIDs of participants" },
+        "adId": { "type": "string", "description": "Reference to the ad being discussed" },
+        "adTitle": { "type": "string" },
+        "lastMessage": { "type": "string" },
+        "lastMessageAt": { "type": "string", "format": "date-time" },
+        "unreadCount": { "type": "object", "description": "Map of userId to unread count" }
+      },
+      "required": ["participants", "adId", "lastMessageAt"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "A single chat message",
+      "type": "object",
+      "properties": {
+        "senderId": { "type": "string" },
+        "text": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["senderId", "text", "createdAt"]
+    },
+    "Comment": {
+      "title": "Comment",
+      "description": "A public comment on an ad",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "text": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "text", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/ads": {
+      "schema": "Ad",
+      "description": "Global collection of all items for sale"
+    },
+    "/ads/{adId}/comments": {
+      "schema": "Comment",
+      "description": "Public comments on an ad"
+    },
+    "/users": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/users/{userId}/reviews": {
+      "schema": "Review",
+      "description": "Reviews received by a user"
+    },
+    "/chats": {
+      "schema": "Conversation",
+      "description": "Collection of chat threads"
+    },
+    "/chats/{chatId}/messages": {
+      "schema": "Message",
+      "description": "Messages within a chat thread"
+    }
+  }
+}

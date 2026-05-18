@@ -1,0 +1,86 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Primitives
+    function isSignedIn() { return request.auth != null; }
+    function isVerified() { return isSignedIn() && request.auth.token.email_verified == true; }
+    function isAdmin() { return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+
+    // Validation Blueprints
+    function isValidAd(data) {
+      return data.keys().hasAll(['title', 'price', 'category', 'sellerId', 'createdAt', 'status'])
+        && data.title is string && data.title.size() > 0 && data.title.size() <= 100
+        && data.price is number && data.price >= 0
+        && data.category is string && data.category.size() <= 50
+        && data.sellerId == request.auth.uid
+        && data.status in ['active', 'sold', 'deleted']
+        && (data.get('description', '') is string && data.get('description', '').size() <= 2000)
+        && (data.get('images', []) is list && data.get('images', []).size() <= 10);
+    }
+
+    function isValidUser(data) {
+       return data.keys().hasAll(['displayName', 'email'])
+        && data.displayName is string && data.displayName.size() <= 100
+        && data.email is string && data.email.size() <= 100
+        && (data.get('whatsappNumber', '') is string && data.get('whatsappNumber', '').size() <= 20);
+    }
+
+    // Collection Rules
+    match /ads/{adId} {
+      allow get: if true;
+      allow list: if true; // Public marketplace
+      
+      allow create: if isVerified() 
+        && isValidId(adId) 
+        && isValidAd(incoming())
+        && incoming().createdAt == request.time;
+        
+      allow update: if isVerified()
+        && (
+          (existing().sellerId == request.auth.uid && isValidAd(incoming()) && (
+            // Action: Edit Ad info
+            incoming().diff(existing()).affectedKeys().hasOnly(['title', 'description', 'price', 'category', 'condition', 'images', 'location', 'contactMethod', 'whatsappNumber', 'status'])
+          )) || isAdmin()
+        );
+        
+      allow delete: if isAdmin() || (isSignedIn() && existing().sellerId == request.auth.uid);
+    }
+
+    match /users/{userId} {
+      allow get: if true;
+      allow list: if true; // To show seller lists/search
+      
+      allow create: if isVerified() && request.auth.uid == userId && isValidUser(incoming());
+      allow update: if isVerified() && (
+        (request.auth.uid == userId && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'whatsappNumber']))
+        || isAdmin()
+      );
+    }
+
+    match /users/{userId}/reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isVerified() 
+        && userId != request.auth.uid // Cannot review self
+        && incoming().fromUserId == request.auth.uid
+        && incoming().toUserId == userId
+        && incoming().rating >= 1 && incoming().rating <= 5
+        && incoming().createdAt == request.time;
+      
+      allow update: if isAdmin();
+      allow delete: if isAdmin() || (isSignedIn() && existing().fromUserId == request.auth.uid);
+    }
+
+    match /admins/{adminId} {
+      allow read: if isSignedIn() && request.auth.uid == adminId;
+      allow write: if false; // Only manageable via console
+    }
+  }
+}
